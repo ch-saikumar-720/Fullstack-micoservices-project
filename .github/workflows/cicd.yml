@@ -1,7 +1,9 @@
 name: CI/CD workflow
+
 run-name: >
-  Terraform - 
-  ${{ github.event.inputs.environment }} - 
+  Terraform -
+  ${{ github.event.inputs.environment }} -
+  ${{ github.event.inputs.region }} -
   ${{ github.ref_name }}
 
 on:
@@ -9,52 +11,77 @@ on:
     inputs:
       region:
         description: Select the region
-        default: us-east-1
         required: true
         type: choice
+        default: us-east-1
         options:
           - us-east-1
           - eu-west-1
+
       environment:
         description: Select the env
-        default: dev
         required: true
         type: choice
+        default: dev
         options:
           - dev
           - prod
+
 jobs:
   tf_plan:
     name: Validate and Plan
     runs-on: ubuntu-latest
 
     environment: ${{ github.event.inputs.environment }}
+
     defaults:
       run:
         working-directory: ./terraform-eks
+
+    permissions:
+      contents: read
+      issues: write
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Configure AWS Credentials (Shell)
+      - name: Configure AWS Credentials
         run: |
           echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
           echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
-          echo "AWS_DEFAULT_REGION=us-east-1" >> $GITHUB_ENV
-            
+          echo "AWS_DEFAULT_REGION=${{ github.event.inputs.region }}" >> $GITHUB_ENV
+
+      - name: Verify AWS Identity
+        run: aws sts get-caller-identity
+
       - name: Terraform Init
         run: terraform init -backend-config=backend.config
 
       - name: Terraform Validate
         run: terraform validate
-        
+
       - name: Terraform Plan
-        run: terraform plan
-        
-      - name: Terraform apply
-        run: terraform apply -auto-approve
+        run: terraform plan -no-color > plan.txt
+
+      - name: Create Custom Approval Issue
+        run: |
+          PLAN_CONTENT=$(cat plan.txt | head -c 60000)
+
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${{ github.repository }}/issues \
+            -d "{
+              \"title\": \"Terraform Approval Required - ${{ github.run_name }}\",
+              \"body\": \"## Terraform Plan Approval Required 🚀\n\n**Environment:** ${{ github.event.inputs.environment }}\n**Region:** ${{ github.event.inputs.region }}\n**Branch:** ${{ github.ref_name }}\n\n---\n\n### Plan Output:\n\`\`\`\n$PLAN_CONTENT\n\`\`\`\n\n---\n\nReview workflow run:\n${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\n\nPlease approve before running apply.\",
+              \"labels\": [\"terraform\", \"approval\"]
+            }"
+
+      - name: Stop After Issue Creation
+        run: echo "Approval issue created. Waiting for manual approval."

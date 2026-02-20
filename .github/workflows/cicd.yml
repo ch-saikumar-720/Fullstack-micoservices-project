@@ -27,8 +27,6 @@ on:
           - dev
           - prod
 
-  issue_comment:
-    types: [created]
     
 permissions:
   contents: read
@@ -86,15 +84,51 @@ jobs:
       - name: Stop After Issue Creation
         run: echo "Approval issue created. Waiting for manual approval."
   tf_apply:
-    if: >
-      github.event_name == 'issue_comment' &&
-      github.event.issue.pull_request == null &&
-      contains(github.event.comment.body, '/approve')
-
+    needs: tf_plan
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./terraform-eks
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Wait for Issue Approval
+        shell: bash
+        run: |
+          ISSUE_NUMBER=$(gh issue list --label terraform --limit 1 --json number -q '.[0].number')
+
+          echo "Waiting for approval on issue #$ISSUE_NUMBER"
+
+          APPROVED=false
+          MAX_WAIT=1800   # 30 minutes
+          INTERVAL=30
+          ELAPSED=0
+
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            COMMENTS=$(gh issue view $ISSUE_NUMBER --json comments -q '.comments[].body')
+
+            if echo "$COMMENTS" | grep -q "/approve"; then
+              USER=$(gh issue view $ISSUE_NUMBER --json comments -q '.comments[-1].author.login')
+
+              if [ "$USER" == "ch-saikumar-720" ]; then
+                echo "Approved by authorized user."
+                APPROVED=true
+                break
+              else
+                echo "Approval found but not from authorized user."
+              fi
+            fi
+
+            sleep $INTERVAL
+            ELAPSED=$((ELAPSED + INTERVAL))
+          done
+
+          if [ "$APPROVED" != "true" ]; then
+            echo "Approval timeout."
+            exit 1
+          fi
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -103,12 +137,10 @@ jobs:
         run: |
           echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
           echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
-          echo "AWS_DEFAULT_REGION=us-east-1" >> $GITHUB_ENV
+          echo "AWS_DEFAULT_REGION=${{ github.event.inputs.region }}" >> $GITHUB_ENV
 
       - name: Terraform Init
         run: terraform init -backend-config=backend.config
-        working-directory: ./terraform-eks
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
-        working-directory: ./terraform-eks  

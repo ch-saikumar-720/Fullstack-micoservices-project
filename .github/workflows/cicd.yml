@@ -52,19 +52,6 @@ jobs:
 
       - name: Terraform Validate
         run: terraform validate
-
+        
       - name: Terraform Plan
-        id: plan
-        run: |
-          terraform plan -no-color > plan.txt
-          echo "stdout<<EOF" >> $GITHUB_OUTPUT
-          cat plan.txt >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Create Approval Issue
-        uses: peter-evans/create-issue-from-file@v5
-        with:
-          title: "Terraform Plan Approval - ${{ github.run_name }}"
-          content-filepath: terraform-eks/plan.txt
-          labels: terraform, approval
-    
+        run: terraform plan

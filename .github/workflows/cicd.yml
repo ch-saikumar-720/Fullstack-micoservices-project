@@ -27,6 +27,13 @@ on:
           - dev
           - prod
 
+  issue_comment:
+    types: [created]
+    
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   tf_plan:
     name: Validate and Plan
@@ -37,10 +44,6 @@ jobs:
     defaults:
       run:
         working-directory: ./terraform-eks
-
-    permissions:
-      contents: read
-      issues: write
 
     steps:
       - name: Checkout Code

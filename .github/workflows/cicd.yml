@@ -1,4 +1,8 @@
 name: CI/CD workflow
+run-name: >
+  Terraform - 
+  ${{ github.event.inputs.environment }} - 
+  ${{ github.event.inputs.branch }}
 
 on:
   workflow_dispatch:

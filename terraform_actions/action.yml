@@ -1,0 +1,71 @@
+name: "Terraform Approval Action"
+description: "Runs Terraform plan and creates approval issue"
+
+inputs:
+  region:
+    description: "AWS region"
+    required: true
+  environment:
+    description: "Deployment environment"
+    required: true
+  working_directory:
+    description: "Terraform working directory"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    - name: Configure AWS Credentials
+      shell: bash
+      run: |
+        echo "AWS_ACCESS_KEY_ID=${{ env.AWS_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+        echo "AWS_SECRET_ACCESS_KEY=${{ env.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+        echo "AWS_DEFAULT_REGION=${{ inputs.region }}" >> $GITHUB_ENV
+
+    - name: Terraform Init
+      shell: bash
+      run: terraform init -backend-config=backend.config
+      working-directory: ${{ inputs.working_directory }}
+
+    - name: Terraform Validate
+      shell: bash
+      run: terraform validate
+      working-directory: ${{ inputs.working_directory }}
+
+    - name: Terraform Plan
+      shell: bash
+      run: terraform plan -no-color > plan.txt
+      working-directory: ${{ inputs.working_directory }}
+
+    - name: Create Approval Issue
+      shell: bash
+      run: |
+        cd ${{ inputs.working_directory }}
+
+        PLAN_CONTENT=$(cat plan.txt | head -c 60000)
+
+        ISSUE_BODY=$(jq -n \
+          --arg title "Terraform Approval Required - ${{ inputs.environment }}" \
+          --arg body "Terraform plan generated for environment: ${{ inputs.environment }}
+
+Region: ${{ inputs.region }}
+
+Workflow Run:
+${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+Review plan and approve before apply." \
+          '{
+            title: $title,
+            body: $body,
+            labels: ["terraform","approval"]
+          }')
+
+        curl -X POST \
+          -H "Authorization: Bearer ${{ github.token }}" \
+          -H "Accept: application/vnd.github+json" \
+          https://api.github.com/repos/${{ github.repository }}/issues \
+          -d "$ISSUE_BODY"

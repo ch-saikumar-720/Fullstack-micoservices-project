@@ -9,6 +9,14 @@ inputs:
   working_directory:
     required: true
 
+outputs:
+  issue_url:
+    description: "Created issue URL"
+    value: ${{ steps.create_issue.outputs.issue_url }}
+  issue_number:
+    description: "Created issue number"
+    value: ${{ steps.create_issue.outputs.issue_number }}
+
 runs:
   using: "composite"
   steps:
@@ -39,6 +47,7 @@ runs:
       run: terraform plan -no-color > plan.txt
 
     - name: Create Approval Issue
+      id: create_issue   # ✅ REQUIRED
       shell: bash
       working-directory: ${{ inputs.working_directory }}
       run: |
@@ -61,13 +70,20 @@ runs:
           '{title: $title, body: $body, labels: ["terraform","approval"]}' \
           > issue.json
 
-        RESPONSE=$(curl -X POST \
+        RESPONSE=$(curl -s -X POST \
           -H "Authorization: Bearer $GITHUB_TOKEN" \
           -H "Accept: application/vnd.github+json" \
           https://api.github.com/repos/$GITHUB_REPOSITORY/issues \
           -d @issue.json)
+
         ISSUE_URL=$(echo "$RESPONSE" | jq -r '.html_url')
         ISSUE_NUMBER=$(echo "$RESPONSE" | jq -r '.number')
 
         echo "issue_url=$ISSUE_URL" >> $GITHUB_OUTPUT
         echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
+
+    - name: Print Issue URL
+      shell: bash
+      run: |
+        echo "Approval Issue Created:"
+        echo "${{ steps.create_issue.outputs.issue_url }}"

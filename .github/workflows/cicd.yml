@@ -1,0 +1,45 @@
+name: CI/CD workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Select the branch
+        default: main
+        required: true
+        type: choice
+        options:
+          - main
+          - develop
+      environment:
+        description: Select the env
+        default: dev
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+jobs:
+  tf_plan:
+    name: Validate and Plan
+    runs-on: ubuntu-latest
+
+    environment: ${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan
+    

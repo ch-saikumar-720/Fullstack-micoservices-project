@@ -27,17 +27,18 @@ on:
           - dev
           - prod
 
-    
 permissions:
   contents: read
   issues: write
 
 jobs:
+
   tf_plan:
     name: Validate and Plan
     runs-on: ubuntu-latest
 
-    environment: ${{ github.event.inputs.environment }}
+    outputs:
+      issue_number: ${{ steps.approval.outputs.issue_number }}
 
     defaults:
       run:
@@ -58,9 +59,6 @@ jobs:
           echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
           echo "AWS_DEFAULT_REGION=${{ github.event.inputs.region }}" >> $GITHUB_ENV
 
-      - name: Verify AWS Identity
-        run: aws sts get-caller-identity
-
       - name: Terraform Init
         run: terraform init -backend-config=backend.config
 
@@ -70,7 +68,8 @@ jobs:
       - name: Terraform Plan
         run: terraform plan -no-color > plan.txt
 
-      - name: Create Custom Approval Issue
+      - name: Create Approval Issue
+        id: approval
         uses: ./terraform_actions
         with:
           region: ${{ github.event.inputs.region }}
@@ -80,10 +79,14 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
-      - name: Stop After Issue Creation
-        run: echo "Approval issue created. Waiting for manual approval."
+
+      - name: Show Created Issue
+        run: |
+          echo "Approval issue created:"
+          echo "Issue Number: ${{ steps.approval.outputs.issue_number }}"
+
   tf_apply:
+    name: Apply After Approval
     needs: tf_plan
     runs-on: ubuntu-latest
 
@@ -96,23 +99,25 @@ jobs:
 
       - name: Wait for Issue Approval
         shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ISSUE_NUMBER=$(gh issue list --label terraform --limit 1 --json number -q '.[0].number')
+          ISSUE_NUMBER="${{ needs.tf_plan.outputs.issue_number }}"
 
           echo "Waiting for approval on issue #$ISSUE_NUMBER"
 
           APPROVED=false
-          MAX_WAIT=1800   # 30 minutes
+          MAX_WAIT=1800
           INTERVAL=30
           ELAPSED=0
 
           while [ $ELAPSED -lt $MAX_WAIT ]; do
+
             COMMENTS=$(gh issue view $ISSUE_NUMBER --json comments -q '.comments[].body')
+            LAST_USER=$(gh issue view $ISSUE_NUMBER --json comments -q '.comments[-1].author.login')
 
-            if echo "$COMMENTS" | grep -q "/approve"; then
-              USER=$(gh issue view $ISSUE_NUMBER --json comments -q '.comments[-1].author.login')
-
-              if [ "$USER" == "ch-saikumar-720" ]; then
+            if echo "$COMMENTS" | grep -q "approve"; then
+              if [ "$LAST_USER" == "ch-saikumar-720" ]; then
                 echo "Approved by authorized user."
                 APPROVED=true
                 break

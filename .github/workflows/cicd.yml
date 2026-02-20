@@ -65,6 +65,6 @@ jobs:
         uses: peter-evans/create-issue-from-file@v5
         with:
           title: "Terraform Plan Approval - ${{ github.run_name }}"
-          content-filepath: ./terraform-eks/plan.txt
+          content-filepath: plan.txt
           labels: terraform, approval
     

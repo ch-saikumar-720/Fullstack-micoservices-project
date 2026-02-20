@@ -67,12 +67,7 @@ runs:
           https://api.github.com/repos/$GITHUB_REPOSITORY/issues \
           -d @issue.json)
         ISSUE_URL=$(echo "$RESPONSE" | jq -r '.html_url')
-
-        echo "Issue URL: $ISSUE_URL"
+        ISSUE_NUMBER=$(echo "$RESPONSE" | jq -r '.number')
 
         echo "issue_url=$ISSUE_URL" >> $GITHUB_OUTPUT
-    - name: Print Issue URL
-      shell: bash
-      run: |
-        echo "Approval Issue Created:"
-        echo "${{ steps.create_issue.outputs.issue_url }}"
+        echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT

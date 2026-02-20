@@ -1,0 +1,6 @@
+ami           = "ami-0b6c6ebed2801a5cb"
+instance_type = "t2.micro"
+region        = "us-east-1"
+cidr_block = "192.168.0.0/24"
+cidr_block_sub = "192.168.0.0/26"
+availability_zone = "us-east-1a"

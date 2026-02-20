@@ -1,0 +1,26 @@
+# Terraform state files
+*.tfstate
+*.tfstate.*
+crash.log
+
+# Terraform lock file (optional to ignore)
+# Uncomment if you don't want to commit it
+# .terraform.lock.hcl
+
+# Terraform directory
+.terraform/
+
+# Backend config files (may contain secrets)
+
+
+# tfvars files (often contain secrets)
+
+*.tfvars.json
+
+# CLI config files
+terraform.rc
+.terraformrc
+
+# SSH keys
+*.pe*
+

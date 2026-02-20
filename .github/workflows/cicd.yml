@@ -73,7 +73,7 @@ jobs:
         run: terraform plan -no-color > plan.txt
 
       - name: Create Custom Approval Issue
-        uses: ./.github/workflows/terraform-approval.yml
+        uses: ./terraform_actions/action.yml
         with:
           region: ${{ github.event.inputs.region }}
           environment: ${{ github.event.inputs.environment }}

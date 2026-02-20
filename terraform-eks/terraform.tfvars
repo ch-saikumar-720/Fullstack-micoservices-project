@@ -19,5 +19,5 @@ min_size     = 1
 max_size     = 2
 
 key_name              = "microservervices-project"
-bastion_instance_type = "t3.medium"
+bastion_instance_type = "t2.nano"
 bastion_ami = "ami-0b6c6ebed2801a5cb"

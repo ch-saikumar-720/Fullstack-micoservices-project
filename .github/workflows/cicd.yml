@@ -9,7 +9,7 @@ on:
     inputs:
       region:
         description: Select the region
-        default: main
+        default: us-east-1
         required: true
         type: choice
         options:
@@ -54,5 +54,17 @@ jobs:
         run: terraform validate
 
       - name: Terraform Plan
-        run: terraform plan
+        id: plan
+        run: |
+          terraform plan -no-color > plan.txt
+          echo "stdout<<EOF" >> $GITHUB_OUTPUT
+          cat plan.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Approval Issue
+        uses: peter-evans/create-issue-from-file@v5
+        with:
+          title: "Terraform Plan Approval - ${{ github.run_name }}"
+          content-filepath: ./terraform-eks/plan.txt
+          labels: terraform, approval
     

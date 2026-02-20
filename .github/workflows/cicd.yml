@@ -45,7 +45,7 @@ jobs:
         run: |
              export AWS_ACCESS_KEY_ID=AKIAZLXOZDPHAIP3XAJQ
              export AWS_SECRET_ACCESS_KEY=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
-             export AWS_DEFAULT_REGION=ap-south-1 
+             export AWS_DEFAULT_REGION=us-east-1
             
       - name: Terraform Init
         run: terraform init -backend-config=backend.config

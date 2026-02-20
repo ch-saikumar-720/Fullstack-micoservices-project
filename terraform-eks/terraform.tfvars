@@ -14,9 +14,9 @@ public_subnets = {
 
 instance_types = ["t2.nano"]
 
-desired_size = 2
+desired_size = 1
 min_size     = 1
-max_size     = 3
+max_size     = 2
 
 key_name              = "microservervices-project"
 bastion_instance_type = "t3.medium"

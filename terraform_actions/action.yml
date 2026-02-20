@@ -41,12 +41,14 @@ runs:
       run: terraform plan -no-color > plan.txt
       working-directory: ${{ inputs.working_directory }}
 
-    - name: Create Approval Issue
+        - name: Create Approval Issue
       shell: bash
       run: |
-        cd ${{ inputs.working_directory }}
+        cd "${{ inputs.working_directory }}"
 
         PLAN_CONTENT=$(cat plan.txt | head -c 60000)
+
+        WORKFLOW_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
 
         ISSUE_BODY=$(jq -n \
           --arg title "Terraform Approval Required - ${{ inputs.environment }}" \
@@ -55,7 +57,7 @@ runs:
 Region: ${{ inputs.region }}
 
 Workflow Run:
-${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+$WORKFLOW_URL
 
 Review plan and approve before apply." \
           '{
@@ -65,7 +67,7 @@ Review plan and approve before apply." \
           }')
 
         curl -X POST \
-          -H "Authorization: Bearer ${{ github.token }}" \
+          -H "Authorization: Bearer ${GITHUB_TOKEN}" \
           -H "Accept: application/vnd.github+json" \
-          https://api.github.com/repos/${{ github.repository }}/issues \
+          https://api.github.com/repos/${GITHUB_REPOSITORY}/issues \
           -d "$ISSUE_BODY"

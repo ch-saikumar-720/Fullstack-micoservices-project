@@ -12,7 +12,7 @@ public_subnets = {
   }
 }
 
-instance_types = ["t2.nano"]
+instance_types = ["t3.medium"]
 
 desired_size = 1
 min_size     = 1

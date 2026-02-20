@@ -31,7 +31,7 @@ jobs:
     environment: ${{ github.event.inputs.environment }}
     defaults:
       run:
-        working-directory: ./iac 
+        working-directory: ./terraform-eks
 
     steps:
       - name: Checkout Code

@@ -1,8 +1,13 @@
 variable "region" {}
 variable "cluster_name" {}
 variable "vpc_cidr" {}
-variable "public_subnet_cidr" {}
-variable "availability_zone" {}
+variable "public_subnets" {
+  description = "Public subnets configuration"
+  type = map(object({
+    cidr = string
+    az   = string
+  }))
+}
 variable "bastion_ami" {}
 
 variable "instance_types" {

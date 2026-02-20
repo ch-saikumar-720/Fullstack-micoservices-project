@@ -8,11 +8,17 @@ resource "aws_internet_gateway" "igw" {
 }
 
 resource "aws_subnet" "public" {
+  for_each = var.public_subnets
+
   vpc_id                  = aws_vpc.main.id
-  cidr_block              = var.public_subnet_cidr
-  availability_zone       = var.availability_zone
+  cidr_block              = each.value.cidr
+  availability_zone       = each.value.az
   map_public_ip_on_launch = true
-  tags = { Name = "${var.cluster_name}-public-subnet" }
+
+  tags = {
+    Name = "${var.cluster_name}-${each.key}"
+    "kubernetes.io/role/elb" = "1"
+  }
 }
 
 resource "aws_route_table" "public_rt" {
@@ -26,6 +32,8 @@ resource "aws_route" "internet" {
 }
 
 resource "aws_route_table_association" "public_assoc" {
-  subnet_id      = aws_subnet.public.id
+  for_each = aws_subnet.public
+
+  subnet_id      = each.value.id
   route_table_id = aws_route_table.public_rt.id
 }

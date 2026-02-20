@@ -41,7 +41,7 @@ runs:
       run: terraform plan -no-color > plan.txt
       working-directory: ${{ inputs.working_directory }}
 
-        - name: Create Approval Issue
+    - name: Create Approval Issue
       shell: bash
       run: |
         cd "${{ inputs.working_directory }}"
@@ -71,3 +71,4 @@ Review plan and approve before apply." \
           -H "Accept: application/vnd.github+json" \
           https://api.github.com/repos/${GITHUB_REPOSITORY}/issues \
           -d "$ISSUE_BODY"
+

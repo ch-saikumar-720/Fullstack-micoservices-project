@@ -2,19 +2,19 @@ name: CI/CD workflow
 run-name: >
   Terraform - 
   ${{ github.event.inputs.environment }} - 
-  ${{ github.event.inputs.branch }}
+  ${{ github.ref_name }}
 
 on:
   workflow_dispatch:
     inputs:
-      branch:
-        description: Select the branch
+      region:
+        description: Select the region
         default: main
         required: true
         type: choice
         options:
-          - main
-          - develop
+          - us-east-1
+          - eu-west-1
       environment:
         description: Select the env
         default: dev
@@ -37,10 +37,16 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.branch }}
+          ref: ${{ github.ref_name }}
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      - name: AWS configure
+        run: |
+             export AWS_ACCESS_KEY_ID=AKIAZLXOZDPHAIP3XAJQ
+             export AWS_SECRET_ACCESS_KEY=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
+             export AWS_DEFAULT_REGION=ap-south-1 
+            
       - name: Terraform Init
         run: terraform init -backend-config=backend.config
 

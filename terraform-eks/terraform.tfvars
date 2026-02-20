@@ -10,6 +10,6 @@ desired_size = 2
 min_size     = 1
 max_size     = 3
 
-key_name              = "your-keypair-name"
-bastion_instance_type = "t3.micro"
-bastion_ami = ""
+key_name              = "microservervices-project"
+bastion_instance_type = "t2.medium"
+bastion_ami = "ami-0b6c6ebed2801a5cb"

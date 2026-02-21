@@ -24,3 +24,8 @@ terraform.rc
 # SSH keys
 *.pe*
 
+
+node_modules/
+build/
+dist/
+.env

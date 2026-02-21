@@ -21,3 +21,6 @@ max_size     = 2
 key_name              = "microservervices-project"
 bastion_instance_type = "t2.nano"
 bastion_ami = "ami-0b6c6ebed2801a5cb"
+database_name = "mydatabase"
+database_username = "admin"
+database_password = "Password123!" # Use a secure method to manage sensitive data in production

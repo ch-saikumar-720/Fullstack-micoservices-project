@@ -63,7 +63,7 @@ jobs:
         run: terraform validate
 
       - name: Terraform Plan
-        run: terraform plan -no-color > plan.txt
+        run: terraform plan
 
       - name: Terraform destroy
         run: terraform destroy -auto-approve

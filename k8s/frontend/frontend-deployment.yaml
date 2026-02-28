@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: frontend-deployment
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: frontend
+
+  template:
+    metadata:
+      labels:
+        app: frontend
+
+    spec:
+      containers:
+      - name: frontend
+
+        image: 643672120270.dkr.ecr.us-east-1.amazonaws.com/project-1:frontend
+
+        ports:
+        - containerPort: 80
+
+        env:
+
+        - name: REACT_APP_BACKEND_URL
+          value: http://a4757b66ef26d466cb263d5956ef4983-1268328630.us-east-1.elb.amazonaws.com:5000

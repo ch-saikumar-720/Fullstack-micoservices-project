@@ -7,8 +7,7 @@ function App() {
     password: ""
   });
 
-  // Replace this with your backend public IP or domain
-  const BACKEND_URL = "http://3.238.80.227:5000";
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
   const handleSubmit = async (e) => {
     e.preventDefault();

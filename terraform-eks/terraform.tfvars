@@ -16,7 +16,7 @@ instance_types = ["t3.medium"]
 
 desired_size = 1
 min_size     = 1
-max_size     = 2
+max_size     = 1
 
 key_name              = "microservervices-project"
 bastion_instance_type = "t2.nano"
